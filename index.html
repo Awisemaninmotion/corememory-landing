@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoreMemory — Agent Memory Infrastructure</title>
+<meta name="description" content="Persistent memory architecture that gives AI agents long-term recall. No vector databases. No model lock-in. Just an index that remembers where everything lives.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+  :root {
+    --accent: #005FC6;
+    --yellow: #FFE54A;
+    --near-black: #1E2022;
+    --muted: #8D959B;
+    --bg: #FBFCFD;
+    --card: #FFFFFF;
+    --border: #E8ECF1;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Space Grotesk', system-ui, sans-serif; background: var(--bg); color: var(--near-black); line-height: 1.5; }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  /* Hero */
+  .hero { padding: 100px 0 60px; text-align: center; }
+  .hero-chip { display: inline-block; background: #F0F4F8; color: var(--accent); font-size: 12px; font-weight: 700; padding: 6px 18px; border-radius: 6px; margin-bottom: 24px; letter-spacing: 0.05em; }
+  .hero h1 { font-size: 52px; font-weight: 700; line-height: 1.15; max-width: 720px; margin: 0 auto 20px; }
+  .hero h1 mark { background: var(--yellow); color: inherit; padding: 0 4px; }
+  .hero-desc { max-width: 600px; margin: 0 auto 40px; font-size: 17px; color: var(--muted); line-height: 1.5; padding: 24px 32px; border: 1px solid #B3D0F0; border-radius: 10px; }
+
+  /* Stats row */
+  .stats { display: flex; justify-content: center; gap: 64px; margin: 0 auto 48px; }
+  .stat-val { font-size: 52px; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 12px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* Tags */
+  .tags { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; }
+  .tag { font-size: 11px; color: var(--muted); border: 1px solid #DFE3E8; border-radius: 5px; padding: 4px 12px; background: #F7F8FA; }
+
+  /* Section */
+  .section { padding: 80px 0; }
+  .section h2 { font-size: 32px; font-weight: 700; text-align: center; margin-bottom: 16px; }
+  .section .sub { text-align: center; color: var(--muted); font-size: 16px; margin-bottom: 48px; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+  /* Problem grid */
+  .grid-2x2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--accent); padding: 24px; border-radius: 6px; }
+  .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .card .cstat { font-size: 32px; font-weight: 700; color: var(--accent); float: right; margin-left: 12px; }
+  .card p { font-size: 14px; color: var(--muted); line-height: 1.55; }
+
+  /* How it works */
+  .steps { display: flex; gap: 24px; }
+  .step { flex: 1; background: var(--card); border: 1px solid var(--border); padding: 28px 22px; border-radius: 8px; text-align: center; }
+  .step-num { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: white; font-weight: 700; font-size: 16px; margin-bottom: 14px; }
+  .step h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .step p { font-size: 13px; color: var(--muted); }
+
+  /* Why now */
+  .forces { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .force { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--accent); padding: 24px; border-radius: 6px; }
+  .force h3 { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+  .force p { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .force-stat { font-size: 28px; font-weight: 700; color: var(--accent); }
+  .force-label { font-size: 11px; color: var(--muted); }
+
+  /* Competition */
+  .comp-row { display: flex; align-items: center; padding: 14px 20px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; }
+  .comp-row strong { width: 180px; flex-shrink: 0; }
+  .comp-row .comp-type { width: 200px; color: var(--muted); font-size: 13px; }
+  .comp-row .comp-gap { flex: 1; color: var(--muted); font-size: 13px; }
+
+  /* CTA */
+  .cta { background: var(--yellow); border-radius: 10px; padding: 28px 40px; text-align: center; margin: 40px 0 60px; }
+  .cta p { font-size: 20px; font-weight: 600; }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--border); padding: 32px 0; text-align: center; color: var(--muted); font-size: 13px; }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 36px; }
+    .stats { gap: 32px; }
+    .stat-val { font-size: 36px; }
+    .grid-2x2, .forces { grid-template-columns: 1fr; }
+    .steps { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-chip">PROJECT COREMEMORY</div>
+    <h1>A layer on top of any AI model that makes it <mark>cheaper and more accurate.</mark></h1>
+    <div class="hero-desc">
+      Persistent memory architecture that gives AI agents long-term recall. No vector databases. No model lock-in. Just an index that remembers where everything lives so your agent doesn't waste money re-scanning from scratch.
+    </div>
+    <div class="stats">
+      <div><div class="stat-val">20×</div><div class="stat-label">Fewer tokens per query</div></div>
+      <div><div class="stat-val">95%</div><div class="stat-label">Retrieval accuracy</div></div>
+      <div><div class="stat-val">11</div><div class="stat-label">Automated audit runs</div></div>
+    </div>
+    <div class="tags">
+      <span class="tag">MODEL-AGNOSTIC</span>
+      <span class="tag">LIGHTWEIGHT</span>
+      <span class="tag">PROVEN</span>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2>The Problem</h2>
+    <p class="sub">Every AI agent session starts cold. The agent re-scans everything because it doesn't know what changed. This isn't a model problem — it's an architecture problem.</p>
+    <div class="grid-2x2">
+      <div class="card"><span class="cstat">100%</span><h3>Cold Start</h3><p>Every session begins from zero. The agent has no memory of what it already read, so it re-reads everything.</p></div>
+      <div class="card"><span class="cstat">190K</span><h3>Context Collapse</h3><p>Token windows fill with redundant scans. On ChatGPT, shorter sessions. On Claude, you hit the usage cap faster.</p></div>
+      <div class="card"><span class="cstat">O(n)</span><h3>Token Climb</h3><p>As your knowledge base grows, scan costs grow linearly. Twice the files = twice the waste.</p></div>
+      <div class="card"><span class="cstat">0</span><h3>No Model Fixes This</h3><p>Claude, ChatGPT, DeepSeek — every frontier model resets. Drift is invisible from inside a chat window.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="background: var(--card);">
+  <div class="container">
+    <h2>How It Works</h2>
+    <p class="sub">One index file. Zero infrastructure. Self-maintaining.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><h3>Index</h3><p>A single INDEX.md maps your entire knowledge base — folder structure, file locations, what's where. ~200 tokens to read.</p></div>
+      <div class="step"><div class="step-num">2</div><h3>Route</h3><p>The agent reads the index first, then pulls only the specific file it needs. No blind scanning.</p></div>
+      <div class="step"><div class="step-num">3</div><h3>Audit</h3><p>A scheduled check re-verifies the index. New files, moved folders, stale entries — caught automatically.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2>Why Now</h2>
+    <p class="sub">Three forces are converging to make this the moment.</p>
+    <div class="forces">
+      <div class="force"><h3>Agent Explosion</h3><p>Codex, Claude Code, ChatGPT, Copilot — organizations are deploying agents at scale. Every one burns tokens on redundant context.</p><div class="force-stat">100M+</div><div class="force-label">AI agent users by 2027</div></div>
+      <div class="force"><h3>Context Economics</h3><p>The most expensive waste vector in AI ops isn't compute or inference — it's redundant scanning.</p><div class="force-stat">45%</div><div class="force-label">of tokens wasted</div></div>
+      <div class="force"><h3>Market Validation</h3><p>Anthropic built CLAUDE.md for the same reason. They arrived at the same insight independently.</p><div class="force-stat">CLAUDE.md</div><div class="force-label">shipped by Anthropic</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="background: var(--card);">
+  <div class="container">
+    <h2>Competition</h2>
+    <p class="sub">No one else does what CoreMemory does.</p>
+    <div class="comp-row"><strong>MemGPT / Letta</strong><span class="comp-type">Virtual context mgmt</span><span class="comp-gap">Heavy infra, model-tied, no self-audit</span></div>
+    <div class="comp-row"><strong>LangChain Memory</strong><span class="comp-type">Framework module</span><span class="comp-gap">Ecosystem lock-in, no persistent index</span></div>
+    <div class="comp-row"><strong>Vector RAG systems</strong><span class="comp-type">Embedding + retrieval</span><span class="comp-gap">Costs scale linearly, complex to maintain</span></div>
+    <div class="comp-row"><strong>CLAUDE.md</strong><span class="comp-type">Project guidance</span><span class="comp-gap">Platform-specific, manual, no knowledge navigation</span></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="cta">
+      <p>Building the memory layer every AI agent needs. Let's talk.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">corememory.onlineworkflow.io</div>
+</footer>
+
+</body>
+</html>
